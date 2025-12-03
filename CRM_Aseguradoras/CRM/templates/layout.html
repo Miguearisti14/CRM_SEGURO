@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZuluAris CRM</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/globalstyles.css' %}">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <img src="{% static 'images/logo.png' %}" alt="Logo ZuluAris" class="logo">
+            
+        </div>
+        <div class="header-right">
+            <a href="/login/" class="btn-outline">Iniciar Sesión</a>
+            <a href="/register/" class="btn-primary">Comienza Ya</a>
+        </div>
+    </header>
+
+    <!-- Mensajes de Django -->
+    {% if messages %}
+<div class="messages-container">
+    {% for message in messages %}
+        <div class="message {{ message.tags }}">
+            <span class="icon">
+                {% if message.tags == "success" %}✅{% elif message.tags == "error" %}❌{% elif message.tags == "warning" %}⚠️{% else %}ℹ️{% endif %}
+            </span>
+            <span class="text">{{ message }}</span>
+            <button class="close-message">&times;</button>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+    <!-- Contenido dinámico -->
+    <main>
+        {% block content %}{% endblock content %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-top">
+            <div class="footer-brand">
+                
+                <p>ZuluAris - Gestiona tu negocio con confianza</p>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#">Inicio</a></li>
+                    <li><a href="#">Planes</a></li>
+                    <li><a href="#">Contacto</a></li>
+                </ul>
+            </div>
+            <div class="footer-services">
+                <h4>Banking Services</h4>
+                <ul>
+                    <li>Cuentas</li>
+                    <li>Pagos</li>
+                    <li>Seguridad</li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h4>Contact & Support</h4>
+                <p>+57 310 000 0000</p>
+                <p>Email: soporte@zuluaris.com</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>© 2025 ZuluAris, Inc.</span>
+            <div class="footer-legal">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Accessibility</a>
+            </div>
+        </div>
+    </footer>
+    <script src="{% static 'js/messages.js' %}"></script>
+
+</body>
+
+</html>

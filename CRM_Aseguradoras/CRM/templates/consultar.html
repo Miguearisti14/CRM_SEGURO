@@ -1,0 +1,101 @@
+{% extends 'layout_panel.html' %}
+{% load static %}
+
+{% block title %}Consultar Clientes - ZuluAris CRM{% endblock %}
+
+{% block content %}
+
+    <div>
+        <h2 class="titulo-seccion">Consultar Polizas</h2>
+    </div>
+<div class="card">
+    <!-- 🔍 Buscador -->
+    <form class="consulta-filtros" method="get" action="">
+            <div class="grupo-busqueda">
+                <input 
+                    type="text" 
+                    name="q" 
+                    value="{{ query }}" 
+                    placeholder="Buscar por nombre o DNI..."
+                    class="input-busqueda"
+                >
+
+                <select name="producto" class="input-select">
+                    <option value="">Producto</option>
+                    {% for producto in productos %}
+                        <option value="{{ producto.id }}" {% if producto.id|stringformat:"s" == request.GET.producto %}selected{% endif %}>
+                            {{ producto.descripcion }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" class="btn-buscar">Buscar</button>
+                    <a href="{% url 'gestionar_clientes' %}" class="btn-limpiar">Limpiar filtro</a>
+
+            </div>
+        </form>
+
+    <!-- Tabla de resultados -->
+    <table class="tabla_clientes">
+        <thead>
+            <tr>
+                <th class="col-header col-dni">DNI</th>
+                <th class="col-header col-nom">Cliente</th>
+                <th class="col-header col-cor">Correo</th>
+                <th class="col-header col-prod">Producto</th>
+                <th class="col-header col-vig">Vigencia</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if datos_clientes %}
+                {% for item in datos_clientes %}
+                    {% for poliza in item.polizas %}
+                    <tr>
+                        <td class="col-dni">{{ item.cliente.dni }}</td>
+                        <td class="col-nom">
+                            <a href="{% url 'detalle_cliente' item.cliente.dni %}" class="cliente-link">
+                                {{ item.cliente.nombre }}
+                            </a>
+                        </td>
+                        <td class="col-cor">{{ item.cliente.correo|default:"-" }}</td>
+                        <!-- Producto -->
+                        <td class="col-prod">
+                            <a href="{% url 'detalle_poliza' poliza.id %}" class="cliente-link">
+                                {{ poliza.id_producto.descripcion }}
+                            </a>
+                        </td>
+                        <!-- Vigencia -->
+                        <td class="col-vig">
+                            {{ poliza.fecha_inicio }} → {{ poliza.fecha_fin }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td>{{ item.cliente.dni }}</td>
+                        <td>
+                            <a href="{% url 'detalle_cliente' item.cliente.dni %}" class="cliente-link">
+                                {{ item.cliente.nombre }}
+                            </a>
+                        </td>
+                        <td>{{ item.cliente.correo|default:"-" }}</td>
+                        <td>-</td>
+                        <td>Sin póliza</td>
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6" style="text-align:center;">No hay clientes registrados.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+
+    <div class="acciones-polizas">
+        <a href="{% url 'crear_poliza' %}" class="btn-guardar">Nueva póliza</a>
+    </div>
+    
+</div>
+
+{% endblock %}

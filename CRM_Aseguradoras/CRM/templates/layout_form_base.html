@@ -1,0 +1,23 @@
+{% extends 'layout_panel.html' %}
+{% load static %}
+
+{% block title %}{{ titulo|default:"Formulario" }} - ZuluAris CRM{% endblock %}
+
+{% block content %}
+<section class="panel-formulario-container">
+    <div class="panel-formulario-card">
+
+        {% if descripcion %}
+            <p class="descripcion-seccion">{{ descripcion }}</p>
+        {% endif %}
+
+        <!-- 🔹 Los formularios hijos se declaran aquí -->
+        {% block form_content %}
+            <!-- Aquí el formulario específico (creación, edición, eliminación, etc.) -->
+            <p>Este es un formulario genérico. Sobrescribe el bloque <code>form_content</code> en tus vistas hijas.</p>
+        {% endblock %}
+    </div>
+</section>
+
+<script src="{% static 'js/dependencias.js' %}"></script>
+{% endblock %}
