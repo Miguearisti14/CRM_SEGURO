@@ -19,12 +19,6 @@
                    style="background-color: #e7e9ea;">
         </div>
 
-        <div class="form-group">
-            <label for="dni">Documento</label>
-            <input type="text" name="dni" id="dni" 
-                   value="{{ cliente.dni }}" readonly 
-                   style="background-color: #e7e9ea;">
-        </div>
     </div>
 
     <div class="grupo-doble">
@@ -40,10 +34,28 @@
             </select>
         </div>
 
+        
         <div class="form-group">
-            <label for="telefono">Teléfono / Celular</label>
-            <input type="text" name="telefono" id="telefono" 
+            <label for="dni">Documento</label>
+            <input type="text" name="dni" id="dni" 
+                   value="{{ cliente.dni }}" readonly 
+                   style="background-color: #e7e9ea;">
+        </div>
+
+        
+    </div>
+
+    <div class="grupo-doble">
+        <div class="form-group">
+            <label for="celular">Celular</label>
+            <input type="text" name="celular" id="celular" 
                    value="{{ cliente.celular }}">
+        </div>
+
+        <div class="form-group">
+            <label for="telefono">Teléfono</label>
+            <input type="text" name="telefono" id="telefono" 
+                   value="{{ cliente.telefono }}">
         </div>
     </div>
 
