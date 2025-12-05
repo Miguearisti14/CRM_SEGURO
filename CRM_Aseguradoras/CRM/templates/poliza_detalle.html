@@ -17,20 +17,16 @@
             <p><strong>DNI:</strong> {{ cliente.dni }}</p>
             <p><strong>Tipo de póliza:</strong> {{ poliza.id_tipo_poliza.descripcion }}</p>
             <p><strong>Canal de venta:</strong> {{ poliza.id_canal_venta.descripcion }}</p>
-            <p><strong>Vigencia:</strong> {{ poliza.fecha_inicio }} → {{ poliza.fecha_fin }}</p>
+            <p><strong>Estado:</strong> {{ poliza.id_estado.descripcion }}</p>
         </div>
         {% endif %}
         <div class="acciones-polizas">
-            <form method="POST" action="{% url 'renovar_poliza' poliza.id %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn-guardar">Renovar póliza</button>
-            </form>
 
             <form method="POST" action="{% url 'eliminar_poliza' poliza.id %}" 
-                onsubmit="return confirm('¿Estás seguro de eliminar esta póliza?')" 
+                onsubmit="return confirm('¿Estás seguro de cancelar esta póliza?')" 
                 style="display:inline;">
                 {% csrf_token %}
-                <button type="submit" class="btn-eliminar">Eliminar póliza</button>
+                <button type="submit" class="btn-eliminar">Cancelar póliza</button>
             </form>
         </div>
     </div>

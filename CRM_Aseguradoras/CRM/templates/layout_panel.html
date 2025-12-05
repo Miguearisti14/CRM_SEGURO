@@ -32,7 +32,7 @@
 <body>
     <div class="container">
         <aside class="sidebar sidebar-admin">
-            <div class="logo">ZuluAris CRM</div>
+            <div class="logo">SURA CRM</div>
             <nav>
                 <ul>
                     <li><a href="/resumen/">Resumen</a></li>
@@ -44,17 +44,7 @@
         </aside>
 
         <main class="main-content">
-            <header class="navbar">
-                <div class="navbar-left">
-                    <span class="user">👤 {{ request.user.first_name }} {{ request.user.last_name }}</span>
-                </div>
-                <div class="navbar-right">
-                    <li class="btn-logout">
-                        <a href="/logout/">Cerrar sesión</a>
-                    </li>
-                    </form>
-                </div>
-            </header>
+            
 
             <section class="content">
                 {% block content %}

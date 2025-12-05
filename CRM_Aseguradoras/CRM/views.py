@@ -28,8 +28,6 @@ def obtener_ciudades(request, departamento_id):
     return JsonResponse(list(ciudades), safe=False)
 
 def polizas_por_cliente(request, dni):
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'No autorizado'}, status=401)
     
     try:
         # Obtener pólizas del cliente
@@ -60,8 +58,10 @@ def polizas_por_cliente(request, dni):
 def gestionar_clientes(request):
 
     clientes = Clientes.objects.all()
+    polizas = Polizas.objects.all()
     query = request.GET.get("q")
     producto_id = request.GET.get("producto")
+    estado_id = request.GET.get("estado")
 
     if query:
         clientes = clientes.filter(
@@ -73,6 +73,9 @@ def gestionar_clientes(request):
 
     if producto_id:
         polizas = polizas.filter(id_producto_id=producto_id)
+
+    if estado_id:
+        polizas = polizas.filter(id_estado_id=estado_id)
 
     # Crear una estructura que contenga cada cliente con todas sus pólizas
     datos_clientes = []
@@ -86,7 +89,8 @@ def gestionar_clientes(request):
     return render(request, "consultar.html", {
         "datos_clientes": datos_clientes,
         "query": query or "",
-        "productos": Productos.objects.all()
+        "productos": Productos.objects.all(),
+        "estados": Estado.objects.all(),
     })
 
 
@@ -96,7 +100,7 @@ def detalle_cliente(request, dni):
 
     # Buscar el cliente dentro de la misma empresa del asesor
     cliente = get_object_or_404(Clientes, dni=dni)
-    poliza = Polizas.objects.filter(dni_cliente=cliente).order_by("-fecha_inicio").first()
+    poliza = Polizas.objects.filter(dni_cliente=cliente).first()
     tipos_dni = Tipo_DNI.objects.all()
     departamentos = Departamentos.objects.all()
     ciudades = Ciudades.objects.filter(id_departamento=cliente.id_ciudad.id_departamento)
@@ -155,8 +159,9 @@ def eliminar_poliza(request, poliza_id):
     poliza = get_object_or_404(Polizas, id=poliza_id)
 
     if request.method == "POST":
-        poliza.delete()
-        messages.success(request, "La póliza ha sido eliminada correctamente.")
+        poliza.id_estado = Estado.objects.get_or_create(descripcion="Cancelada")[0]
+        poliza.save()
+        messages.success(request, "La póliza ha sido cancelada correctamente.")
         return redirect("gestionar_clientes")
 
     messages.warning(request, "Operación no permitida.")
@@ -228,7 +233,8 @@ def nuevoCliente(request):
             id_canal_venta_id=canal_id,
             dni_cliente=cliente,
             id_tipo_poliza_id=tipo_poliza_id,
-            id_forma_pago_id=metodo_pago_id
+            id_forma_pago_id=metodo_pago_id,
+            id_estado=Estado.objects.get_or_create(descripcion="Activa")[0]
         )
 
         messages.success(request, f"Cliente '{cliente.nombre}' y su póliza se registraron correctamente.")
@@ -279,7 +285,8 @@ def crear_poliza(request):
             id_canal_venta_id=canal_id,
             dni_cliente=cliente,
             id_tipo_poliza_id=tipo_poliza_id,
-            id_forma_pago_id=metodo_pago_id
+            id_forma_pago_id=metodo_pago_id,
+            id_estado=Estado.objects.get_or_create(descripcion="Activa")[0]
         )
 
 
@@ -306,7 +313,7 @@ def resumen(request):
     clientes_count = Clientes.objects.all().count()
     
     
-    polizas_vigentes = Polizas.objects.all().count()
+    polizas_vigentes = Polizas.objects.filter(id_estado__descripcion="Activa").count()
 
     
     context = {
