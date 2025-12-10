@@ -48,9 +48,10 @@
     <table class="tabla_clientes">
         <thead>
             <tr>
+                <th class="col-header col-nro">Número de Póliza</th>
                 <th class="col-header col-dni">DNI</th>
                 <th class="col-header col-nom">Cliente</th>
-                <th class="col-header col-cor">Correo</th>
+                <th class="col-header col-cor">Celular</th>
                 <th class="col-header col-prod">Producto</th>
                 <th class="col-header col-vig">Estado</th>
             </tr>
@@ -60,13 +61,15 @@
                 {% for item in datos_clientes %}
                     {% for poliza in item.polizas %}
                     <tr>
+                        <td class="col-nro">{{ poliza.id }}</td>
+
                         <td class="col-dni">{{ item.cliente.dni }}</td>
                         <td class="col-nom">
                             <a href="{% url 'detalle_cliente' item.cliente.dni %}" class="cliente-link">
                                 {{ item.cliente.nombre }}
                             </a>
                         </td>
-                        <td class="col-cor">{{ item.cliente.correo|default:"-" }}</td>
+                        <td class="col-cor">{{ item.cliente.celular|default:"-"|floatformat:0 }}</td>
                         <!-- Producto -->
                         <td class="col-prod">
                             <a href="{% url 'detalle_poliza' poliza.id %}" class="cliente-link">
@@ -86,7 +89,7 @@
                                 {{ item.cliente.nombre }}
                             </a>
                         </td>
-                        <td>{{ item.cliente.correo|default:"-" }}</td>
+                        <td>{{ item.cliente.celular|default:"-" }}</td>
                         <td>-</td>
                         <td>Sin póliza</td>
                     </tr>
@@ -100,6 +103,37 @@
         </tbody>
     </table>
 
+    <!-- Controles de paginación -->
+    <div class="pagination-container">
+        <div class="pagination">
+
+            {% if page_obj.has_previous %}
+                <a class="page-link prev" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if request.GET.producto %}&producto={{ request.GET.producto }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">« Anterior</a>
+            {% endif %}
+
+            {% for p in page_obj.paginator.page_range %}
+                {% if p >= page_obj.number|add:-2 and p <= page_obj.number|add:2 %}
+                    {% if p == page_obj.number %}
+                        <span class="page current">{{ p }}</span>
+                    {% else %}
+                        <a class="page-link" href="?page={{ p }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if request.GET.producto %}&producto={{ request.GET.producto }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">{{ p }}</a>
+                    {% endif %}
+                {% elif p == 1 or p == page_obj.paginator.num_pages %}
+                    <a class="page-link" href="?page={{ p }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if request.GET.producto %}&producto={{ request.GET.producto }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">{{ p }}</a>
+                {% elif p == 2 and page_obj.number > 4 %}
+                    <span class="dots">...</span>
+                {% elif p == page_obj.paginator.num_pages|add:-1 and page_obj.number < page_obj.paginator.num_pages|add:-3 %}
+                    <span class="dots">...</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a class="page-link next" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if request.GET.producto %}&producto={{ request.GET.producto }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">Siguiente »</a>
+            {% endif %}
+
+            <span class="page-info">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        </div>
+    </div>
 
     <div class="acciones-polizas">
         <a href="{% url 'crear_poliza' %}" class="btn-guardar">Nueva póliza</a>

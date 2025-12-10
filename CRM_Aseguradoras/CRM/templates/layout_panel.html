@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZuluAris CRM</title>
+    <title>SURA CRM</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'styles/globalstyles.css' %}">
 
@@ -39,6 +39,7 @@
                     <li><a href="/gestionar/">Gestionar pólizas</a></li>
                     <li><a href="/client_form/">Ingresar Cliente</a></li>
                     <li><a href="{% url 'gestionar_datos' %}">Base de Datos</a></li>
+                    <li><a href="{% url 'upload_file' %}">Subir Datos</a></li>
                 </ul>
             </nav>
         </aside>

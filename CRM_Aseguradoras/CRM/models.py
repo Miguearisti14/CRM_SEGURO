@@ -60,7 +60,6 @@ class Ramos(models.Model):
 class Tipo_Poliza(models.Model):
     id = models.AutoField(primary_key=True)
     descripcion = models.CharField(max_length=50, unique=True)
-    valor = models.IntegerField(unique=True)
 
     class Meta:
         db_table = "tipo_poliza"
@@ -86,22 +85,11 @@ class Formas_pago(models.Model):
         db_table = "formas_pago"
 
 # ==============================
-# TABLA DE DEPARTAMENTOS
-# ==============================
-class Departamentos(models.Model):
-    id = models.AutoField(primary_key=True)
-    descripcion = models.CharField(max_length=50, unique=True)
-
-    class Meta:
-        db_table = "departamentos"
-
-# ==============================
 # TABLA DE CIUDADES
 # ==============================
 class Ciudades(models.Model):
     id = models.AutoField(primary_key=True)
     descripcion = models.CharField(max_length=50, unique=True)
-    id_departamento = models.ForeignKey(Departamentos, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "ciudades"
@@ -139,11 +127,10 @@ class Clientes(models.Model):
 # TABLA DE PÓLIZAS
 # ==============================
 class Polizas(models.Model):
-    id = models.AutoField(primary_key=True)
+    id = models.CharField(max_length=50, primary_key=True)
     id_producto = models.ForeignKey(Productos, on_delete=models.CASCADE)
     id_canal_venta = models.ForeignKey(Canal_venta, on_delete=models.CASCADE)
-    id_tipo_poliza = models.ForeignKey(Tipo_Poliza, on_delete=models.CASCADE)
-    id_forma_pago = models.ForeignKey(Formas_pago, on_delete=models.CASCADE)
+    id_tipo_poliza = models.ForeignKey(Tipo_Poliza, on_delete=models.CASCADE) # Hace referencia a la forma de pago
     dni_cliente = models.ForeignKey(Clientes, on_delete=models.CASCADE)
     id_estado = models.ForeignKey(Estado, on_delete=models.CASCADE)
 

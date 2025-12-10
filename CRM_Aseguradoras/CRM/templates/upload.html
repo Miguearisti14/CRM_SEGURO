@@ -1,0 +1,25 @@
+{% extends 'layout_panel.html' %}
+{% load static %}
+
+{% block content %}
+<div class="upload-container">
+    <div class="upload-box">
+        <h2 class="titulo-seccion">Subir Datos</h2>
+        <p class="subtitle" id="upload-subtitle">Importa clientes y pólizas desde un archivo CSV o XLSX</p>
+        
+        <form method="POST" enctype="multipart/form-data" class="upload-form">
+            {% csrf_token %}
+            
+            <div class="form-group" id="file-input-group">
+                <label for="data_file">Selecciona tu archivo:</label>
+                <input type="file" name="data_file" id="data_file" accept=".csv,.xlsx,.xls" required>
+                <small>Formatos soportados: CSV, XLSX, XLS</small>
+            </div>
+            
+            <button type="submit" id="submit-btn" class="btn-guardar">Importar Datos</button>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -27,7 +27,7 @@
             <select name="tipo_dni" id="tipo_dni" required>
                 {% for tipo in tipos_dni %}
                     <option value="{{ tipo.id }}" 
-                            {% if cliente.id_tipo_dni.id == tipo.id %}selected{% endif %}>
+                            {% if cliente.id_tipo_dni and cliente.id_tipo_dni.id == tipo.id %}selected{% endif %}>
                         {{ tipo.nombre }}
                     </option>
                 {% endfor %}
@@ -49,22 +49,17 @@
         <div class="form-group">
             <label for="celular">Celular</label>
             <input type="text" name="celular" id="celular" 
-                   value="{{ cliente.celular }}">
+                   value="{{ cliente.celular |floatformat:0 }}">
         </div>
 
         <div class="form-group">
             <label for="telefono">Teléfono</label>
             <input type="text" name="telefono" id="telefono" 
-                   value="{{ cliente.telefono }}">
+                   value="{{ cliente.telefono |floatformat:0}}">
         </div>
     </div>
 
     <div class="grupo-doble">
-        <div class="form-group">
-            <label for="correo">Correo electrónico</label>
-            <input type="email" name="correo" id="correo" 
-                   value="{{ cliente.correo|default:'' }}">
-        </div>
 
         <div class="form-group">
             <label for="direccion">Dirección</label>
@@ -75,23 +70,12 @@
 
     <div class="grupo-doble">
         <div class="form-group">
-            <label for="departamento">Departamento</label>
-            <select name="departamento" id="departamento">
-                {% for dep in departamentos %}
-                    <option value="{{ dep.id }}" 
-                            {% if cliente.id_ciudad.id_departamento.id == dep.id %}selected{% endif %}>
-                        {{ dep.descripcion }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group">
             <label for="ciudad">Ciudad</label>
             <select name="ciudad" id="ciudad">
+                <option value="">-- Selecciona --</option>
                 {% for c in ciudades %}
                     <option value="{{ c.id }}" 
-                            {% if cliente.id_ciudad.id == c.id %}selected{% endif %}>
+                        {% if cliente.id_ciudad and cliente.id_ciudad.id == c.id %}selected{% endif %}>
                         {{ c.descripcion }}
                     </option>
                 {% endfor %}

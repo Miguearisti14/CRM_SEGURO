@@ -6,11 +6,13 @@ from django.db.models.functions import TruncMonth
 from django.db.models.deletion import ProtectedError
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+import pandas as pd
+from django.core.paginator import Paginator
 
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Estado,Ciudades, Departamentos, Ramos, TipoInteraccion, Formas_pago, Tipo_Poliza, Canal_venta, Tipo_DNI, Roles, Clientes, Ciudades, Productos, Canal_venta, Tipo_Poliza, Polizas, Departamentos
+from .models import Estado,Ciudades, Ramos, TipoInteraccion, Formas_pago, Tipo_Poliza, Canal_venta, Tipo_DNI, Roles, Clientes, Ciudades, Productos, Canal_venta, Tipo_Poliza, Polizas
 from django.db.models import Q, Count
 from django.contrib.auth.models import User
 from CRM.models import Tipo_DNI, Canal_venta, Estado
@@ -21,11 +23,6 @@ from CRM.models import Tipo_DNI, Canal_venta, Estado
 # Create your views here.
 def index(request):
     return render(request, 'index.html')
-
-
-def obtener_ciudades(request, departamento_id):
-    ciudades = Ciudades.objects.filter(id_departamento_id=departamento_id).values("id", "descripcion")
-    return JsonResponse(list(ciudades), safe=False)
 
 def polizas_por_cliente(request, dni):
     
@@ -57,37 +54,51 @@ def polizas_por_cliente(request, dni):
 # Vista y lógica para mostrar y gestionar clientes y sus pólizas
 def gestionar_clientes(request):
 
-    clientes = Clientes.objects.all()
-    polizas = Polizas.objects.all()
     query = request.GET.get("q")
     producto_id = request.GET.get("producto")
     estado_id = request.GET.get("estado")
 
+    # Comenzar desde las pólizas (más eficiente para paginación)
+    polizas = Polizas.objects.select_related("id_producto", "id_canal_venta", "dni_cliente", "id_estado").all()
+
+    # Búsqueda: nombre o dni del cliente O id de póliza
     if query:
-        clientes = clientes.filter(
-            Q(nombre__icontains=query) | Q(dni__icontains=query)
+        q = str(query).strip()
+        polizas = polizas.filter(
+            Q(dni_cliente__nombre__icontains=q) |
+            Q(dni_cliente__dni__icontains=q) |
+            Q(id__icontains=q)
         )
 
-    # Obtener todas las pólizas para los clientes filtrados
-    polizas = Polizas.objects.filter(dni_cliente__in=clientes).select_related("id_producto", "id_canal_venta")
-
+    # Filtros adicionales sobre pólizas
     if producto_id:
         polizas = polizas.filter(id_producto_id=producto_id)
 
     if estado_id:
         polizas = polizas.filter(id_estado_id=estado_id)
 
-    # Crear una estructura que contenga cada cliente con todas sus pólizas
+    # Paginación
+    page_number = request.GET.get("page", 1)
+    paginator = Paginator(polizas, 10)  # 10 por página (ajusta)
+    page_obj = paginator.get_page(page_number)
+
+    # Agrupar solo las pólizas de la página actual por cliente (preserva objetos relacionados)
     datos_clientes = []
-    for cliente in clientes:
-        polizas_cliente = polizas.filter(dni_cliente=cliente)
+    seen = set()
+    for pol in page_obj.object_list:
+        dni_cliente = pol.dni_cliente.dni
+        if dni_cliente in seen:
+            continue
+        seen.add(dni_cliente)
+        polizas_cliente = [p for p in page_obj.object_list if p.dni_cliente.dni == dni_cliente]
         datos_clientes.append({
-            "cliente": cliente,
+            "cliente": pol.dni_cliente,
             "polizas": polizas_cliente
         })
 
     return render(request, "consultar.html", {
         "datos_clientes": datos_clientes,
+        "page_obj": page_obj,
         "query": query or "",
         "productos": Productos.objects.all(),
         "estados": Estado.objects.all(),
@@ -102,8 +113,7 @@ def detalle_cliente(request, dni):
     cliente = get_object_or_404(Clientes, dni=dni)
     poliza = Polizas.objects.filter(dni_cliente=cliente).first()
     tipos_dni = Tipo_DNI.objects.all()
-    departamentos = Departamentos.objects.all()
-    ciudades = Ciudades.objects.filter(id_departamento=cliente.id_ciudad.id_departamento)
+    ciudades = Ciudades.objects.all()
 
     # === ACTUALIZACIÓN DE DATOS ===
     if request.method == "POST":
@@ -128,7 +138,6 @@ def detalle_cliente(request, dni):
         "cliente": cliente,
         "poliza": poliza,
         "tipos_dni": tipos_dni,
-        "departamentos": departamentos,
         "ciudades": ciudades,
     }
     return render(request, "cliente_detalle.html", context)
@@ -187,13 +196,11 @@ def eliminar_cliente(request, dni):
 # Crear un nuevo cliente junto con su póliza inicial
 def nuevoCliente(request):
     # Datos para los selects
-    tipos_dni = Tipo_DNI.objects.all()
-    tipo_polizas = Tipo_Poliza.objects.all()
-    productos = Productos.objects.all()
-    canales = Canal_venta.objects.all()
-    departamentos = Departamentos.objects.all()
-    ciudades = Ciudades.objects.all()
-    metodos = Formas_pago.objects.all()
+    tipos_dni = Tipo_DNI.objects.all().order_by("nombre")
+    tipo_polizas = Tipo_Poliza.objects.all().order_by("descripcion")
+    productos = Productos.objects.all().order_by("descripcion")
+    canales = Canal_venta.objects.all().order_by("descripcion")
+    ciudades = Ciudades.objects.all().order_by("descripcion")
 
     if request.method == "POST":
         nombre = request.POST.get("nombre")
@@ -207,8 +214,8 @@ def nuevoCliente(request):
         tipo_poliza_id = request.POST.get("poliza")
         canal_id = request.POST.get("canal")
         ciudad_id = request.POST.get("ciudad")
-        departamento_id = request.POST.get("metodo")
-        metodo_pago_id = request.POST.get("metodo")
+        numero_poliza = request.POST.get("numero")
+
 
         # Validar duplicado
         if Clientes.objects.filter(dni=dni).exists():
@@ -229,12 +236,13 @@ def nuevoCliente(request):
 
         # Crear la póliza asociada al cliente y a la empresa del asesor
         Polizas.objects.create(
+            id=numero_poliza,
             id_producto_id=producto_id,
             id_canal_venta_id=canal_id,
             dni_cliente=cliente,
             id_tipo_poliza_id=tipo_poliza_id,
-            id_forma_pago_id=metodo_pago_id,
             id_estado=Estado.objects.get_or_create(descripcion="Activa")[0]
+            
         )
 
         messages.success(request, f"Cliente '{cliente.nombre}' y su póliza se registraron correctamente.")
@@ -245,31 +253,28 @@ def nuevoCliente(request):
         "productos": productos,
         "tipos_dni": tipos_dni,
         "canales": canales,
-        "departamentos": departamentos,
         "ciudades": ciudades,
         "tipos": tipo_polizas,
-        "metodos": metodos
     })
 
 
 # Crear poliza para usuario ya existente
 def crear_poliza(request):
 
-    clientes = Clientes.objects.all()
+    clientes = Clientes.objects.all().order_by("nombre")
 
 
     # Cargar datos para los selects
-    productos = Productos.objects.all()
-    tipos_poliza = Tipo_Poliza.objects.all()
-    canales = Canal_venta.objects.all()
-    metodos = Formas_pago.objects.all()
+    productos = Productos.objects.all().order_by("descripcion")
+    tipos_poliza = Tipo_Poliza.objects.all().order_by("descripcion")
+    canales = Canal_venta.objects.all().order_by("descripcion")
 
     if request.method == "POST":
         dni_cliente_id = request.POST.get("cliente")
         producto_id = request.POST.get("producto")
         tipo_poliza_id = request.POST.get("tipo_poliza")
         canal_id = request.POST.get("canal")
-        metodo_pago_id = request.POST.get("metodo")
+        numero_poliza = request.POST.get("numero")
 
         # Validación básica
         if not dni_cliente_id or not producto_id or not tipo_poliza_id:
@@ -281,11 +286,11 @@ def crear_poliza(request):
 
         # Crear póliza
         Polizas.objects.create(
+            id=numero_poliza,
             id_producto_id=producto_id,
             id_canal_venta_id=canal_id,
             dni_cliente=cliente,
             id_tipo_poliza_id=tipo_poliza_id,
-            id_forma_pago_id=metodo_pago_id,
             id_estado=Estado.objects.get_or_create(descripcion="Activa")[0]
         )
 
@@ -300,7 +305,7 @@ def crear_poliza(request):
         "productos": productos,
         "tipos_poliza": tipos_poliza,
         "canales": canales,
-        "metodos": metodos 
+
     })
 
 
@@ -358,8 +363,7 @@ def gestionar_datos(request):
         "formas_pago": Formas_pago.objects.all().order_by("descripcion"),
         "estados": Estado.objects.all().order_by("descripcion"),
         "productos": Productos.objects.all().order_by("descripcion"),
-        "ciudades": Ciudades.objects.select_related('id_departamento').all().order_by("descripcion"),
-        "departamentos": Departamentos.objects.all().order_by("descripcion"),
+        "ciudades": Ciudades.objects.all().order_by("descripcion"),
         "tipos_interaccion": TipoInteraccion.objects.all().order_by("descripcion"),
     }
     return render(request, "gestionar_datos.html", context)
@@ -407,23 +411,18 @@ def crear_dato(request, recurso):
     # Manejo especial para ciudades
     if recurso == "ciudad":
         descripcion = request.POST.get("descripcion", "").strip()
-        id_departamento = request.POST.get("id_departamento", "").strip()
         
-        if not descripcion or not id_departamento:
-            messages.error(request, "La ciudad y el departamento son obligatorios.")
+        if not descripcion:
+            messages.error(request, "La descripción de la ciudad es obligatoria.")
             return redirect(request.META.get("HTTP_REFERER", "/"))
         
-        if Ciudades.objects.filter(descripcion__iexact=descripcion, id_departamento_id=id_departamento).exists():
-            messages.warning(request, "Ya existe esa ciudad en ese departamento.")
+        if Ciudades.objects.filter(descripcion__iexact=descripcion).exists():
+            messages.warning(request, "Ya existe esa ciudad.")
             return redirect(request.META.get("HTTP_REFERER", "/"))
         
-        try:
-            departamento = Departamentos.objects.get(pk=id_departamento)
-            ciudad = Ciudades(descripcion=descripcion, id_departamento=departamento)
-            ciudad.save()
-            messages.success(request, "Ciudad creada correctamente.")
-        except Departamentos.DoesNotExist:
-            messages.error(request, "El departamento seleccionado no existe.")
+        ciudad = Ciudades(descripcion=descripcion)
+        ciudad.save()
+        messages.success(request, "Ciudad creada correctamente.")
         return redirect(request.META.get("HTTP_REFERER", "/"))
     
     # Lógica existente para catálogos simples
@@ -478,3 +477,162 @@ def eliminar_dato(request, recurso, pk):
         messages.error(request, "No se puede eliminar: está en uso por otros registros.")
     return redirect(request.META.get("HTTP_REFERER", "/"))
 
+@login_required
+def upload_file(request):
+    if request.method == 'POST' and request.FILES.get('data_file'):
+        archivo = request.FILES['data_file']
+        
+        try:
+            # Leer el archivo CSV o XLSX
+            if archivo.name.endswith('.csv'):
+                df = pd.read_csv(archivo, header=0)
+            elif archivo.name.endswith(('.xlsx', '.xls')):
+                df = pd.read_excel(archivo, header=0)
+            else:
+                messages.error(request, "Formato no válido. Usa CSV o XLSX.")
+                return redirect('upload_file')
+            
+            # Procesar el archivo
+            resultado = procesar_datos(df)
+            messages.success(request, resultado['mensaje'])
+            return redirect('upload_file')
+            
+        except Exception as e:
+            messages.error(request, f"Error al procesar el archivo: {str(e)}")
+            return redirect('upload_file')
+    
+    return render(request, 'upload.html')
+
+
+def procesar_datos(df):
+
+    clientes_creados = 0
+    clientes_actualizados = 0
+    polizas_creadas = 0
+    errores = 0
+
+    for index, row in df.iterrows():
+        try:
+            # ======================
+            # CIUDAD (crear si no existe)
+            # ======================
+            ciudad = None
+            # Soportar encabezados 'CIUDAD' o 'Ciudad'
+            ciudad_val = row.get('CIUDAD') or row.get('Ciudad')
+            if pd.notna(ciudad_val):
+                ciudad_desc = str(ciudad_val).strip()
+                ciudad = Ciudades.objects.filter(descripcion__iexact=ciudad_desc).first()
+                if not ciudad:
+                    ciudad = Ciudades.objects.create(descripcion=ciudad_desc)
+
+            # Si no viene ciudad, intentar asignar la primera existente (prevención)
+            if not ciudad:
+                ciudad = Ciudades.objects.first()
+
+            # ======================
+            # TIPO DNI (crear si no existe)
+            # ======================
+            tipo_dni = None
+            if pd.notna(row.get('Tipo Dni Tomador')):
+                tipo_dni_desc = str(row['Tipo Dni Tomador']).strip()
+                tipo_dni = Tipo_DNI.objects.filter(nombre__iexact=tipo_dni_desc).first()
+                if not tipo_dni:
+                    tipo_dni = Tipo_DNI.objects.create(nombre=tipo_dni_desc)
+            if not tipo_dni:
+                tipo_dni = Tipo_DNI.objects.first()
+
+            # ======================
+            # CLIENTE (get_or_create / actualizar)
+            # ======================
+            dni = str(row.get('N° Dni Tomador') or "").strip()
+            if not dni:
+                raise ValueError("DNI vacío")
+
+            cliente, creado = Clientes.objects.get_or_create(
+                dni=dni,
+                defaults={
+                    'nombre': str(row.get('Nombre Tomador') or "").strip(),
+                    'direccion': str(row.get('Dirección Tomador', '')).strip() or "Sin Registrar",
+                    'telefono': str(row.get('Teléfono Fijo Tomador', '')).strip() or "Sin Registrar",
+                    'celular': str(row.get('Teléfono Celular Tomador', '')).strip() or "Sin Registrar",
+                    'id_tipo_dni': tipo_dni,
+                    'id_ciudad': ciudad
+                }
+            )
+
+            if creado:
+                clientes_creados += 1
+            else:
+                cliente.nombre = str(row.get('Nombre Tomador') or "").strip()
+                cliente.direccion = str(row.get('Dirección Tomador', '')).strip() or "Sin Registrar"
+                cliente.telefono = str(row.get('Teléfono Fijo Tomador', '')).strip() or "Sin Registrar"
+                cliente.celular = str(row.get('Teléfono Celular Tomador', '')).strip() or "Sin Registrar"
+                cliente.id_tipo_dni = tipo_dni
+                cliente.id_ciudad = ciudad
+                cliente.save()
+                clientes_actualizados += 1
+
+            # ======================
+            # PRODUCTO (crear si no existe)
+            # ======================
+            producto = None
+            if pd.notna(row.get('Producto')):
+                producto_desc = str(row['Producto']).strip()
+                producto = Productos.objects.filter(descripcion__iexact=producto_desc).first()
+                if not producto:
+                    ramo_def = Ramos.objects.first()
+                    producto = Productos.objects.create(descripcion=producto_desc, id_ramo=ramo_def)
+            if not producto:
+                producto = Productos.objects.first()
+
+            # ======================
+            # CANAL DE VENTA (crear si no existe)
+            # ======================
+            canal = None
+            if pd.notna(row.get('Canal Ventas')):
+                canal_desc = str(row['Canal Ventas']).strip()
+                canal = Canal_venta.objects.filter(descripcion__iexact=canal_desc).first()
+                if not canal:
+                    canal = Canal_venta.objects.create(descripcion=canal_desc)
+            if not canal:
+                canal = Canal_venta.objects.first()
+
+            # ======================
+            # TIPO DE PÓLIZA / FORMA PAGO (crear si no existe)
+            # Nota: el archivo usa 'Forma Pago' y en este código se busca en Tipo_Poliza.
+            # Si tu intención es usar Formas_pago cambia Tipo_Poliza por Formas_pago aquí.
+            # ======================
+            forma_pago = None
+            if pd.notna(row.get('Forma Pago')):
+                forma_desc = str(row['Forma Pago']).strip()
+                # Mantengo Tipo_Poliza como en la versión original; ajustar si corresponde.
+                forma_pago = Tipo_Poliza.objects.filter(descripcion__iexact=forma_desc).first()
+                if not forma_pago:
+                    forma_pago = Tipo_Poliza.objects.create(descripcion=forma_desc)
+            if not forma_pago:
+                forma_pago = Tipo_Poliza.objects.first()
+
+            # ======================
+            # CREAR PÓLIZA si existe ID Póliza
+            # ======================
+            if pd.notna(row.get('Póliza')):
+                id_poliza = str(row['Póliza']).strip()
+                if id_poliza and not Polizas.objects.filter(id=id_poliza).exists():
+                    estado = Estado.objects.filter(descripcion__iexact="Activa").first() or Estado.objects.first()
+
+                    Polizas.objects.create(
+                        id=id_poliza,
+                        dni_cliente=cliente,
+                        id_producto=producto,
+                        id_canal_venta=canal,
+                        id_tipo_poliza=forma_pago,
+                        id_estado=estado,
+                    )
+                    polizas_creadas += 1
+
+        except Exception as e:
+            errores += 1
+            print(f"Error en fila {index + 1}: {str(e)}")
+
+    mensaje = f"Importación completada: {clientes_creados} clientes creados, {clientes_actualizados} clientes actualizados, {polizas_creadas} pólizas creadas, {errores} errores."
+    return {'exito': True, 'mensaje': mensaje}
