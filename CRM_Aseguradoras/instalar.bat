@@ -3,7 +3,7 @@ title Instalador ZuluAris CRM
 color 0A
 
 echo ========================================
-echo   INSTALADOR ZULUARIS CRM v1.0
+echo   INSTALADOR SURA CRM v1.0
 echo ========================================
 echo.
 

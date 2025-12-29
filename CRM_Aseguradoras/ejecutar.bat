@@ -3,7 +3,7 @@ title ZuluAris CRM - Servidor Activo
 color 0B
 
 echo ========================================
-echo   ZULUARIS CRM - INICIANDO...
+echo   SURA CRM - INICIANDO...
 echo ========================================
 echo.
 

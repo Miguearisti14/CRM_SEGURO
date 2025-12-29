@@ -13,14 +13,4 @@ EJECUCIÓN:
 2. Se abrirá automáticamente en tu navegador
 3. La ventana negra debe permanecer abierta
 
-CREDENCIALES POR DEFECTO:
---------------------------
-Usuario: admin@zuluaris.com
-Contraseña: admin123
-
-SOPORTE:
---------
-Contacto: tu_email@ejemplo.com
-Teléfono: +57 300 123 4567
-
 ==============================================
