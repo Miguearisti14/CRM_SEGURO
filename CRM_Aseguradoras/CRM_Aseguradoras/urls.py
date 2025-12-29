@@ -17,6 +17,7 @@ urlpatterns = [
     path("api/polizas-cliente/<str:dni>/", CRM.views.polizas_por_cliente, name="polizas_por_cliente"),
     path('polizas-cliente/<str:dni>/', CRM.views.polizas_por_cliente, name='polizas_por_cliente'),
     path('upload/', CRM.views.upload_file, name='upload_file'),
+    path('vaciar-bd/', CRM.views.vaciar_base_datos, name='vaciar_base_datos'),
 
     path("datos/", CRM.views.gestionar_datos, name="gestionar_datos"),
     path("datos/crear/<str:recurso>/", CRM.views.crear_dato, name="crear_dato"),

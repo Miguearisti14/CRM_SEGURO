@@ -12,7 +12,7 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Estado,Ciudades, Ramos, TipoInteraccion, Formas_pago, Tipo_Poliza, Canal_venta, Tipo_DNI, Roles, Clientes, Ciudades, Productos, Canal_venta, Tipo_Poliza, Polizas, Tipo_cuenta
+from .models import Estado,Ciudades, TipoInteraccion, Formas_pago, Tipo_Poliza, Canal_venta, Tipo_DNI, Roles, Clientes, Ciudades, Productos, Canal_venta, Tipo_Poliza, Polizas, Tipo_cuenta
 from django.db.models import Q, Count
 from django.contrib.auth.models import User
 from CRM.models import Tipo_DNI, Canal_venta, Estado
@@ -400,25 +400,16 @@ def crear_dato(request, recurso):
     # Manejo especial para productos
     if recurso == "producto":
         descripcion = request.POST.get("descripcion", "").strip()
-        categoria = request.POST.get("id_ramo", "").strip()
-
-        Ramos.objects.get_or_create(descripcion=categoria)
-
-        ramo_default = Ramos.objects.filter(descripcion__iexact=categoria).first()
 
         if not descripcion:
             messages.error(request, "La descripción es obligatoria.")
             return redirect(request.META.get("HTTP_REFERER", "/"))
         
-        # Validar que no exista
         if Productos.objects.filter(descripcion__iexact=descripcion).exists():
             messages.warning(request, "Ya existe un producto con esa descripción.")
             return redirect(request.META.get("HTTP_REFERER", "/"))
         
-        producto = Productos(
-            descripcion=descripcion,
-            id_ramo=ramo_default
-        )
+        producto = Productos(descripcion=descripcion)
         producto.save()
         messages.success(request, "Producto creado correctamente.")
         return redirect(request.META.get("HTTP_REFERER", "/"))
@@ -438,6 +429,23 @@ def crear_dato(request, recurso):
         ciudad = Ciudades(descripcion=descripcion)
         ciudad.save()
         messages.success(request, "Ciudad creada correctamente.")
+        return redirect(request.META.get("HTTP_REFERER", "/"))
+    
+    # Manejo especial para tipos de cuenta
+    if recurso == "tipo_cuenta":
+        descripcion = request.POST.get("nombre", "").strip()
+        
+        if not descripcion:
+            messages.error(request, "La descripción del tipo de cuenta es obligatoria.")
+            return redirect(request.META.get("HTTP_REFERER", "/"))
+        
+        if Tipo_cuenta.objects.filter(descripcion__iexact=descripcion).exists():
+            messages.warning(request, "Ya existe ese tipo de cuenta.")
+            return redirect(request.META.get("HTTP_REFERER", "/"))
+        
+        tipo_cuenta = Tipo_cuenta(descripcion=descripcion)
+        tipo_cuenta.save()
+        messages.success(request, "Tipo de cuenta creado correctamente.")
         return redirect(request.META.get("HTTP_REFERER", "/"))
     
     # Lógica existente para catálogos simples
@@ -475,7 +483,31 @@ def eliminar_dato(request, recurso, pk):
             messages.error(request, "No se puede eliminar: está en uso por otros registros.")
         return redirect(request.META.get("HTTP_REFERER", "/"))
     
-       # Lógica existente
+    # Manejo especial para ciudades
+    if recurso == "ciudad":
+        try:
+            ciudad = Ciudades.objects.get(pk=pk)
+            ciudad.delete()
+            messages.success(request, "Ciudad eliminada correctamente.")
+        except Ciudades.DoesNotExist:
+            messages.error(request, "La ciudad no existe.")
+        except ProtectedError:
+            messages.error(request, "No se puede eliminar: está en uso por otros registros.")
+        return redirect(request.META.get("HTTP_REFERER", "/"))
+    
+    # Manejo especial para tipos de cuenta
+    if recurso == "tipo_cuenta":
+        try:
+            tipo_cuenta = Tipo_cuenta.objects.get(pk=pk)
+            tipo_cuenta.delete()
+            messages.success(request, "Tipo de cuenta eliminado correctamente.")
+        except Tipo_cuenta.DoesNotExist:
+            messages.error(request, "El tipo de cuenta no existe.")
+        except ProtectedError:
+            messages.error(request, "No se puede eliminar: está en uso por otros registros.")
+        return redirect(request.META.get("HTTP_REFERER", "/"))
+    
+    # Lógica existente para otros catálogos
     mapping = _catalog_mapping()
     if recurso not in mapping:
         messages.error(request, "Recurso no válido.")
@@ -595,8 +627,7 @@ def procesar_datos(df):
                 producto_desc = str(row['Producto']).strip()
                 producto = Productos.objects.filter(descripcion__iexact=producto_desc).first()
                 if not producto:
-                    ramo_def = Ramos.objects.first()
-                    producto = Productos.objects.create(descripcion=producto_desc, id_ramo=ramo_def)
+                    producto = Productos.objects.create(descripcion=producto_desc)
             if not producto:
                 producto = Productos.objects.first()
 
@@ -651,3 +682,19 @@ def procesar_datos(df):
 
     mensaje = f"Importación completada: {clientes_creados} clientes creados, {clientes_actualizados} clientes actualizados, {polizas_creadas} pólizas creadas, {errores} errores."
     return {'exito': True, 'mensaje': mensaje}
+
+
+def vaciar_base_datos(request):
+
+    try:
+        # Eliminar todas las pólizas primero (por integridad referencial)
+        Polizas.objects.all().delete()
+        
+        # Eliminar todos los clientes
+        Clientes.objects.all().delete()
+        
+        messages.success(request, "Base de datos vaciada correctamente. Se eliminaron todos los clientes y pólizas.")
+    except Exception as e:
+        messages.error(request, f"Error al vaciar la base de datos: {str(e)}")
+    
+    return redirect('gestionar_clientes')

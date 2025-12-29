@@ -137,8 +137,11 @@
 
     <div class="acciones-polizas">
         <a href="{% url 'crear_poliza' %}" class="btn-guardar">Nueva póliza</a>
+        
     </div>
-    
-</div>
+    <form method="POST" action="{% url 'vaciar_base_datos' %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn-eliminar" onclick="return confirm('¿Estás seguro de que deseas eliminar TODOS los clientes y pólizas? Esta acción no se puede deshacer.')">Vaciar Base de Datos</button>
+        </form>
 
 {% endblock %}

@@ -43,16 +43,6 @@ class Estado(models.Model):
     class Meta:
         db_table = "estados"
 
-# ==============================
-# TABLA DE RAMOS
-# ==============================
-class Ramos(models.Model):
-    id = models.AutoField(primary_key=True)
-    descripcion = models.CharField(max_length=50, unique=True)
-
-    class Meta:
-        db_table = "ramos"
-
 
 # ==============================
 # TABLA DE TIPO DE POLIZA
@@ -100,7 +90,6 @@ class Ciudades(models.Model):
 class Productos(models.Model):
     id = models.AutoField(primary_key=True)
     descripcion = models.CharField(max_length=50, unique=True)
-    id_ramo = models.ForeignKey(Ramos, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "productos"

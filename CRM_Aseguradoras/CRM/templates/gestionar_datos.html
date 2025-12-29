@@ -18,6 +18,7 @@
         <li class="gd-tab" data-target="tab-productos">Productos</li>
         <li class="gd-tab" data-target="tab-formas-pago">Formas de Pago</li>
         <li class="gd-tab" data-target="tab-estados">Estados</li>
+        <li class="gd-tab" data-target="tab-tipos-cuenta">Tipos de Cuenta</li>
       </ul>
     </div>
 
@@ -88,7 +89,6 @@
         <thead>
           <tr>
             <th>Descripción</th>
-            <th>Ramo</th>
             <th style="width:140px;">Acciones</th>
           </tr>
         </thead>
@@ -96,7 +96,6 @@
           {% for p in productos %}
           <tr>
             <td>{{ p.descripcion }}</td>
-            <td>{{ p.id_ramo.descripcion|default:"-" }}</td>
             <td>
               <form method="POST" action="{% url 'eliminar_dato' 'producto' p.id %}" class="gd-inline-form">
                 {% csrf_token %}
@@ -113,7 +112,6 @@
         {% csrf_token %}
         <div class="gd-form-row">
           <input type="text" name="descripcion" class="gd-input" placeholder="Descripción del producto" required>
-          <input type="text" name="id_ramo" class="gd-input" placeholder="Ramo">
           <button type="submit" class="gd-btn gd-btn-add">Agregar</button>
         </div>
       </form>
@@ -208,6 +206,37 @@
         </div>
       </form>
     </div>
+
+    <!-- Tipos de Cuenta -->
+    <div class="gd-tab-content" id="tab-tipos-cuenta">
+      <h3 class="gd-subtitle">Tipos de Cuenta Bancaria</h3>
+      <table class="gd-table">
+        <thead><tr><th>Nombre</th><th style="width:140px;">Acciones</th></tr></thead>
+        <tbody>
+          {% for tc in tipos_cuenta %}
+          <tr>
+            <td>{{ tc.descripcion }}</td>
+            <td>
+              <form method="POST" action="{% url 'eliminar_dato' 'tipo_cuenta' tc.id %}" class="gd-inline-form">
+                {% csrf_token %}
+                <button class="gd-btn gd-btn-del" onclick="return confirm('¿Eliminar este tipo de cuenta?')">Eliminar</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="2" class="gd-empty">No hay registros.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <form method="POST" action="{% url 'crear_dato' 'tipo_cuenta' %}" class="gd-form-inline">
+        {% csrf_token %}
+        <div class="gd-form-row">
+          <input type="text" name="nombre" class="gd-input" placeholder="Nuevo tipo de cuenta" required>
+          <button type="submit" class="gd-btn gd-btn-add">Agregar</button>
+        </div>
+      </form>
+    </div>
+
   </div>
 </section>
 
