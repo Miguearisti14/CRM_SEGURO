@@ -105,6 +105,18 @@ class Productos(models.Model):
     class Meta:
         db_table = "productos"
 
+
+# ==============================
+# TABLA DE CUENTAS BANCARIAS
+# ==============================
+class Tipo_cuenta(models.Model):
+    id = models.AutoField(primary_key=True)
+    descripcion = models.CharField(max_length=50, unique=True)
+
+    class Meta:
+        db_table = "tipo_cuenta"
+
+
 # ==============================
 # TABLA DE CLIENTES
 # ==============================
@@ -117,6 +129,8 @@ class Clientes(models.Model):
     telefono = models.CharField(max_length=50, blank=True, null=True)
     celular = models.CharField(max_length=50)
     correo = models.EmailField(blank=True, null=True)
+    cuenta_bancaria = models.CharField(max_length=100, blank=True, null=True)
+    tipo_cuenta = models.ForeignKey(Tipo_cuenta, on_delete=models.CASCADE, blank=True, null=True)
 
     class Meta:
         db_table = "clientes"

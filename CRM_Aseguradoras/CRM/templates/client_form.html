@@ -44,7 +44,7 @@
     <div class="grupo-doble">
       
         <div class="form-group">
-            <label for="telefono">Teléfono</label>
+            <label for="telefono">Teléfono (opcional)</label>
             <input type="text" id="telefono" name="telefono" placeholder="604 123 4567">
         </div>
 
@@ -57,7 +57,7 @@
     <div class="grupo-doble">
 
         <div class="form-group">
-            <label for="direccion">Dirección</label>
+            <label for="direccion">Dirección (opcional)</label>
             <input type="text" id="direccion" name="direccion" placeholder="Calle 10 #45-23, Medellín">
         </div>
 
@@ -70,6 +70,25 @@
                     <option value="{{ ciudad.id }}">{{ ciudad.descripcion }}</option>
                 {% endfor %}
             </select>
+        </div>
+    </div>
+
+    <div class="grupo-doble">
+        
+        <div class="form-group">
+            <label for="tipo_cuenta">Tipo de cuenta bancaria (opcional)</label>
+            <select id="tipo_cuenta" name="tipo_cuenta">
+                <option value="">Selecciona una opción</option>
+                {% for tipo in tipos_cuenta %}
+                    <option value="{{ tipo.id }}">{{ tipo.descripcion }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        
+        <div class="form-group">
+            <label for="numero_cuenta">Número de cuenta bancaria (opcional)</label>
+            <input type="text" id="numero_cuenta" name="numero_cuenta" placeholder="1234567890">
         </div>
     </div>
 

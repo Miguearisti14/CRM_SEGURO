@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Roles, Tipo_DNI, TipoInteraccion, Estado, Ramos,
     Tipo_Poliza, Canal_venta, Formas_pago,
-    Ciudades, Productos, Clientes,Polizas
+    Ciudades, Productos, Clientes,Polizas, Tipo_cuenta
 )
 
 admin.site.register(Roles)
@@ -17,3 +17,4 @@ admin.site.register(Ciudades)
 admin.site.register(Productos)
 admin.site.register(Clientes)
 admin.site.register(Polizas)
+admin.site.register(Tipo_cuenta)

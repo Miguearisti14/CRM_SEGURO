@@ -59,27 +59,47 @@
         </div>
     </div>
 
-    <div class="grupo-doble">
+        <div class="grupo-doble">
 
-        <div class="form-group">
-            <label for="direccion">Dirección</label>
-            <input type="text" name="direccion" id="direccion" 
-                   value="{{ cliente.direccion|default:'' }}">
+            <div class="form-group">
+                <label for="direccion">Dirección</label>
+                <input type="text" name="direccion" id="direccion" 
+                    value="{{ cliente.direccion|default:'' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="ciudad">Ciudad</label>
+                <select name="ciudad" id="ciudad">
+                    <option value="">-- Selecciona --</option>
+                    {% for c in ciudades %}
+                        <option value="{{ c.id }}" 
+                            {% if cliente.id_ciudad and cliente.id_ciudad.id == c.id %}selected{% endif %}>
+                            {{ c.descripcion }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
-    </div>
 
+    
     <div class="grupo-doble">
         <div class="form-group">
-            <label for="ciudad">Ciudad</label>
-            <select name="ciudad" id="ciudad">
+            <label for="tipo_cuenta">Tipo de cuenta bancaria</label>
+            <select name="tipo_cuenta" id="tipo_cuenta">
                 <option value="">-- Selecciona --</option>
-                {% for c in ciudades %}
-                    <option value="{{ c.id }}" 
-                        {% if cliente.id_ciudad and cliente.id_ciudad.id == c.id %}selected{% endif %}>
-                        {{ c.descripcion }}
+                {% for tipo in tipos_cuenta %}
+                    <option value="{{ tipo.id }}" 
+                        {% if cliente.tipo_cuenta and cliente.tipo_cuenta.id == tipo.id %}selected{% endif %}>
+                        {{ tipo.descripcion }}
                     </option>
                 {% endfor %}
             </select>
+        </div>
+
+        <div class="form-group">
+            <label for="numero_cuenta">Número de cuenta bancaria</label>
+            <input type="text" name="numero_cuenta" id="numero_cuenta" 
+                   value="{{ cliente.cuenta_bancaria|default:'' }}">
         </div>
     </div>
 

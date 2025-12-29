@@ -12,7 +12,7 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Estado,Ciudades, Ramos, TipoInteraccion, Formas_pago, Tipo_Poliza, Canal_venta, Tipo_DNI, Roles, Clientes, Ciudades, Productos, Canal_venta, Tipo_Poliza, Polizas
+from .models import Estado,Ciudades, Ramos, TipoInteraccion, Formas_pago, Tipo_Poliza, Canal_venta, Tipo_DNI, Roles, Clientes, Ciudades, Productos, Canal_venta, Tipo_Poliza, Polizas, Tipo_cuenta
 from django.db.models import Q, Count
 from django.contrib.auth.models import User
 from CRM.models import Tipo_DNI, Canal_venta, Estado
@@ -114,6 +114,7 @@ def detalle_cliente(request, dni):
     poliza = Polizas.objects.filter(dni_cliente=cliente).first()
     tipos_dni = Tipo_DNI.objects.all()
     ciudades = Ciudades.objects.all()
+    tipos_cuenta = Tipo_cuenta.objects.all()
 
     # === ACTUALIZACIÓN DE DATOS ===
     if request.method == "POST":
@@ -121,14 +122,19 @@ def detalle_cliente(request, dni):
         cliente.telefono = request.POST.get("telefono")
         cliente.correo = request.POST.get("correo")
         cliente.direccion = request.POST.get("direccion")
+        cliente.cuenta_bancaria = request.POST.get("numero_cuenta")
+        cliente.tipo_cuenta_id = request.POST.get("tipo_cuenta")
 
         tipo_dni_id = request.POST.get("tipo_dni")
         ciudad_id = request.POST.get("ciudad")
+        tipo_cuenta_id = request.POST.get("tipo_cuenta")
 
         if tipo_dni_id:
             cliente.id_tipo_dni_id = tipo_dni_id
         if ciudad_id:
             cliente.id_ciudad_id = ciudad_id
+        if tipo_cuenta_id:
+            cliente.id_tipo_cuenta_id = tipo_cuenta_id
 
         cliente.save()
         messages.success(request, f"Cliente '{cliente.nombre}' actualizado correctamente.")
@@ -139,6 +145,7 @@ def detalle_cliente(request, dni):
         "poliza": poliza,
         "tipos_dni": tipos_dni,
         "ciudades": ciudades,
+        "tipos_cuenta": tipos_cuenta,
     }
     return render(request, "cliente_detalle.html", context)
 
@@ -201,6 +208,7 @@ def nuevoCliente(request):
     productos = Productos.objects.all().order_by("descripcion")
     canales = Canal_venta.objects.all().order_by("descripcion")
     ciudades = Ciudades.objects.all().order_by("descripcion")
+    tipos_cuenta = Tipo_cuenta.objects.all().order_by("descripcion")
 
     if request.method == "POST":
         nombre = request.POST.get("nombre")
@@ -215,6 +223,8 @@ def nuevoCliente(request):
         canal_id = request.POST.get("canal")
         ciudad_id = request.POST.get("ciudad")
         numero_poliza = request.POST.get("numero")
+        tipo_cuenta_id = request.POST.get("tipo_cuenta")
+        numero_cuenta = request.POST.get("numero_cuenta")
 
 
         # Validar duplicado
@@ -231,7 +241,9 @@ def nuevoCliente(request):
             telefono=telefono or "",
             correo=correo or "",
             celular=celular or "",
-            id_ciudad_id=ciudad_id
+            id_ciudad_id=ciudad_id,
+            tipo_cuenta_id=tipo_cuenta_id or "",
+            cuenta_bancaria=numero_cuenta or ""
         )
 
         # Crear la póliza asociada al cliente y a la empresa del asesor
@@ -255,6 +267,7 @@ def nuevoCliente(request):
         "canales": canales,
         "ciudades": ciudades,
         "tipos": tipo_polizas,
+        "tipos_cuenta": tipos_cuenta,
     })
 
 
@@ -365,6 +378,7 @@ def gestionar_datos(request):
         "productos": Productos.objects.all().order_by("descripcion"),
         "ciudades": Ciudades.objects.all().order_by("descripcion"),
         "tipos_interaccion": TipoInteraccion.objects.all().order_by("descripcion"),
+        "tipos_cuenta": Tipo_cuenta.objects.all().order_by("descripcion"),
     }
     return render(request, "gestionar_datos.html", context)
 
@@ -376,6 +390,7 @@ def _catalog_mapping():
         "forma_pago": (Formas_pago, "descripcion"),
         "estado": (Estado, "descripcion"),
         "tipo_interaccion": (TipoInteraccion, "descripcion"),
+        "tipo_cuenta": (Tipo_cuenta, "descripcion"),
     }
 
 @require_POST
